@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026-present AUTHOR <your@email.com>
+# SPDX-FileCopyrightText: 2026-present Aeonmind LLC <hi@outcrawl.ai>
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -13,6 +13,12 @@ jobs:
   release-on-pypi:
     name: Publish on PyPI
     runs-on: ubuntu-latest
+    # PyPI trusted publishing: no API token is stored. The publisher is configured on PyPI for this repository,
+    # workflow (release.yml) and environment (pypi).
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -32,7 +38,4 @@ jobs:
         run: hatch build
 
       - name: Publish to PyPI
-        env:
-          HATCH_INDEX_USER: __token__
-          HATCH_INDEX_AUTH: ${{ secrets.PYPI_API_TOKEN }}
-        run: hatch publish -y
+        uses: pypa/gh-action-pypi-publish@106e0b0b7c337fa67ed433972f777c6357f78598 # v1.13.0

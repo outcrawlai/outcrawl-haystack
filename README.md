@@ -1,80 +1,52 @@
-# Custom Component Template
+# outcrawl-haystack
 
-A template repository for creating custom [Haystack](https://haystack.deepset.ai/) components and publishing them as standalone Python packages.
+[![PyPI - Version](https://img.shields.io/pypi/v/outcrawl-haystack.svg)](https://pypi.org/project/outcrawl-haystack)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/outcrawl-haystack.svg)](https://pypi.org/project/outcrawl-haystack)
 
-For more details, see the Haystack documentation on [creating custom components](https://docs.haystack.deepset.ai/docs/custom-components) and [creating custom document stores](https://docs.haystack.deepset.ai/docs/creating-custom-document-stores).
+[Haystack](https://haystack.deepset.ai/) components for [Outcrawl](https://outcrawl.ai), web infrastructure for AI agents:
+search the web and fetch pages as Markdown, as Haystack `Document`s.
 
-## How to use this template
+- `OutcrawlWebSearch`: runs a web search through the Outcrawl Search API and returns the results as documents, plus their links.
+- `OutcrawlFetcher`: loads each URL in a browser through the Outcrawl Scrape API, so JavaScript-rendered pages work, and returns the page as a Markdown document.
 
-1. Click **[Use this template](https://github.com/deepset-ai/custom-component/generate)** to create a new repository.
+## Installation
 
-2. **Rename the package directory** from `src/haystack_integrations/components/example/` to match your integration. See [Namespace convention](#namespace-convention) below for the correct path.
-
-3. **Update `pyproject.toml`** — search for `TODO` comments and replace:
-   - `name`: your package name, following the `<technology>-haystack` convention (e.g. `opensearch-haystack`)
-   - `description`, `authors`, `keywords`, `project.urls`
-   - `dependencies`: add your integration-specific dependencies
-   - `tool.hatch.version.raw-options`: if you renamed directories, the version path is still derived from git tags so no change is needed here
-
-4. **Add your component code** in the renamed directory and export your classes from `__init__.py`.
-
-5. **Add tests** in `tests/` — see the skeleton in `tests/test_example.py`.
-
-6. **Search for all `TODO` comments** across the project and address them.
-
-Check out the [video walkthrough](https://www.youtube.com/watch?v=SWC0QecAMcI) for a step-by-step guide on how to use this template.
-
-## Namespace convention
-
-Haystack integrations use the `haystack_integrations` namespace package. The directory structure under `src/` determines the import path for your component.
-
-**Components** (converters, embedders, generators, rankers, etc.) use:
+```console
+pip install outcrawl-haystack
 ```
-src/haystack_integrations/components/<type>/<name>/
-```
-Import path: `from haystack_integrations.components.<type>.<name> import MyComponent`
 
-Common component types: `converters`, `embedders`, `generators`, `rankers`, `retrievers`, `connectors`, `tools`, `websearch`
+You need an Outcrawl API key, which you create at [outcrawl.ai/console](https://outcrawl.ai/console). The free plan includes credits every month.
+Set it as the `OUTCRAWL_API_KEY` environment variable.
 
-**Document stores** use a separate namespace:
+## Usage
+
+```python
+from haystack_integrations.components.fetchers.outcrawl import OutcrawlFetcher
+from haystack_integrations.components.websearch.outcrawl import OutcrawlWebSearch
+
+search = OutcrawlWebSearch(top_k=5)
+found = search.run(query="What is Haystack by deepset?")
+print(found["links"])
+
+fetcher = OutcrawlFetcher()
+pages = fetcher.run(urls=found["links"][:2])
+for doc in pages["documents"]:
+    print(doc.meta, doc.content[:200])
 ```
-src/haystack_integrations/document_stores/<name>/
-```
-Import path: `from haystack_integrations.document_stores.<name> import MyDocumentStore`
+
+Both components also have `run_async`, and both accept extra request parameters (`search_params` and `params`);
+see the [Outcrawl docs](https://outcrawl.ai/docs) for the options.
 
 ## Development
 
-This project uses [Hatch](https://hatch.pypa.io/) for build and environment management.
-
-```bash
-# Install Hatch
+```console
 pip install hatch
-
-# Format and lint
-hatch run fmt        # auto-fix
-hatch run fmt-check  # check only
-
-# Run tests
-hatch run test:unit         # unit tests only
-hatch run test:integration  # integration tests only
-hatch run test:all          # all tests
-hatch run test:cov          # with coverage
+hatch run fmt-check
+hatch run test:unit
 ```
 
-## Publishing to PyPI
-
-This template includes a GitHub Actions workflow that publishes your package to PyPI when you push a version tag.
-
-1. **Add a `PYPI_API_TOKEN` secret** to your repository settings (Settings > Secrets and variables > Actions).
-
-2. **Create a version tag** and push it:
-   ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
-   ```
-
-The release workflow will build and publish the package automatically.
+The integration tests need `OUTCRAWL_API_KEY` in the environment. Releases are published to PyPI by the `Release` workflow when a `v<version>` tag is pushed.
 
 ## License
 
-`Apache-2.0` - See [LICENSE](LICENSE) for details.
+`outcrawl-haystack` is distributed under the terms of the [Apache-2.0](LICENSE) license.
